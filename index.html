@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Unser Wochen-Essensplan</title>
+  <meta name="theme-color" content="#ff6b6b">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #ff6b6b;
+      --primary-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+      --accent: #4ecdc4;
+      --tag-dennis: #38bdf8;
+      --tag-partner: #f472b6;
+      --tag-both: #a78bfa;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px 100px 12px;
+      overflow-x: hidden;
+    }
+
+    /* Background glow effect */
+    .glow {
+      position: fixed;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(255, 107, 107, 0.25) 0%, rgba(15, 23, 42, 0) 70%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    header {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 0 4px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 99px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Day Navigation Pill Bar */
+    .days-scroller {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 12px 2px;
+      scrollbar-width: none;
+    }
+
+    .days-scroller::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-pill {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      border-radius: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .day-pill.active {
+      background: var(--primary-gradient);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(255, 107, 107, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .day-pill .short {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* Main Meal Container */
+    .content-area {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .meal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 18px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.3s ease-out;
+      position: relative;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .meal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .meal-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .meal-input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .meal-input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 1.05rem;
+      color: var(--text);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .meal-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+    }
+
+    .meal-input::placeholder {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    /* Person Tags */
+    .tags-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .tag-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-right: 2px;
+    }
+
+    .person-chip {
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      opacity: 0.45;
+      background: rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .person-chip.active {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+
+    .person-chip[data-person="Ich"] {
+      color: var(--tag-dennis);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .person-chip[data-person="Ich"].active {
+      background: rgba(56, 189, 248, 0.2);
+    }
+
+    .person-chip[data-person="Freundin"] {
+      color: var(--tag-partner);
+      border-color: rgba(244, 114, 182, 0.3);
+    }
+    .person-chip[data-person="Freundin"].active {
+      background: rgba(244, 114, 182, 0.2);
+    }
+
+    .person-chip[data-person="Beide"] {
+      color: var(--tag-both);
+      border-color: rgba(167, 139, 250, 0.3);
+    }
+    .person-chip[data-person="Beide"].active {
+      background: rgba(167, 139, 250, 0.2);
+    }
+
+    /* Inspiration Dice */
+    .random-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .random-btn:active {
+      transform: rotate(180deg) scale(1.2);
+    }
+
+    /* Floating Bottom Action */
+    .bottom-bar {
+      position: fixed;
+      bottom: 20px;
+      width: calc(100% - 24px);
+      max-width: 480px;
+      display: flex;
+      gap: 10px;
+      z-index: 50;
+    }
+
+    .primary-btn {
+      flex: 1;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .primary-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 24px;
+      background: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 99px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      transform: translateY(-100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div id="toast" class="toast">Link in Zwischenablage kopiert! 📋</div>
+
+  <header>
+    <div>
+      <h1>Wochenplan 🥑</h1>
+      <span style="font-size: 0.78rem; color: var(--text-muted);">Zusammen kochen & genießen</span>
+    </div>
+    <button class="action-btn" onclick="sharePlan()">
+      🔗 Plan teilen
+    </button>
+  </header>
+
+  <!-- Wochentage -->
+  <div class="days-scroller" id="dayPills"></div>
+
+  <!-- Mahlzeiten des ausgewählten Tages -->
+  <div class="content-area" id="mealContainer"></div>
+
+  <!-- Bottom Floating Button -->
+  <div class="bottom-bar">
+    <button class="primary-btn" onclick="shareViaApp()">
+      📲 Plan als WhatsApp-Nachricht / Link teilen
+    </button>
+  </div>
+
+  <script>
+    const DAYS = [
+      { id: 'mo', name: 'Montag', short: 'Mo' },
+      { id: 'di', name: 'Dienstag', short: 'Di' },
+      { id: 'mi', name: 'Mittwoch', short: 'Mi' },
+      { id: 'do', name: 'Donnerstag', short: 'Do' },
+      { id: 'fr', name: 'Freitag', short: 'Fr' },
+      { id: 'sa', name: 'Samstag', short: 'Sa' },
+      { id: 'so', name: 'Sonntag', short: 'So' }
+    ];
+
+    const RECIPE_IDEAS = [
+      'Pasta Pesto & Kirschtomaten', 'Linsen-Curry mit Kokosmilch', 'Selbstgemachte Pizza', 
+      'Ofengemüse mit Feta', 'Burrito Bowls mit Bohnen & Guacamole', 'Flammkuchen', 
+      'Couscous-Salat mit Minze & Halloumi', 'Gnocchi in Salbeibutter', 'Wraps mit Hähnchen/Tofu',
+      'Asiatische gebratene Nudeln', 'Chili sin Carne', 'Kartoffel-Gratin mit Beilagensalat'
+    ];
+
+    let currentDayIndex = 0;
+    let planData = {};
+
+    // Initialisierung
+    function init() {
+      // Prüfen ob Daten im URL-Hash übergeben wurden (zum Synchronisieren)
+      checkUrlHashData();
+
+      const stored = localStorage.getItem('couple_meal_plan');
+      if (stored) {
+        try {
+          planData = JSON.parse(stored);
+        } catch (e) {
+          initEmptyPlan();
+        }
+      } else if (!Object.keys(planData).length) {
+        initEmptyPlan();
+      }
+
+      renderDayPills();
+      renderDayMeals(currentDayIndex);
+    }
+
+    function initEmptyPlan() {
+      DAYS.forEach(day => {
+        planData[day.id] = {
+          lunch: { meal: '', person: 'Beide' },
+          dinner: { meal: '', person: 'Beide' },
+          snack: { meal: '', person: 'Beide' }
+        };
+      });
+      saveData();
+    }
+
+    function saveData() {
+      localStorage.setItem('couple_meal_plan', JSON.stringify(planData));
+    }
+
+    function renderDayPills() {
+      const container = document.getElementById('dayPills');
+      container.innerHTML = '';
+      DAYS.forEach((day, index) => {
+        const pill = document.createElement('div');
+        pill.className = `day-pill ${index === currentDayIndex ? 'active' : ''}`;
+        pill.innerHTML = `
+          <span class="short">${day.short}</span>
+        `;
+        pill.onclick = () => {
+          currentDayIndex = index;
+          renderDayPills();
+          renderDayMeals(index);
+        };
+        container.appendChild(pill);
+      });
+    }
+
+    function renderDayMeals(dayIdx) {
+      const dayId = DAYS[dayIdx].id;
+      const dayName = DAYS[dayIdx].name;
+      const data = planData[dayId] || { lunch: {}, dinner: {}, snack: {} };
+      const container = document.getElementById('mealContainer');
+
+      const mealTypes = [
+        { key: 'lunch', label: 'Mittagessen', icon: '☀️' },
+        { key: 'dinner', label: 'Abendessen', icon: '🌙' },
+        { key: 'snack', label: 'Snack / Notiz', icon: '🍿' }
+      ];
+
+      container.innerHTML = mealTypes.map(type => {
+        const item = data[type.key] || { meal: '', person: 'Beide' };
+        return `
+          <div class="meal-card">
+            <div class="meal-header">
+              <span class="meal-title">${type.icon} ${type.label} (${dayName})</span>
+              <button class="random-btn" title="Zufällige Idee" onclick="getRandomIdea('${dayId}', '${type.key}')">🎲</button>
+            </div>
+            <div class="meal-input-wrapper">
+              <input 
+                type="text" 
+                class="meal-input" 
+                placeholder="Was gibt es leckeres?" 
+                value="${escapeHtml(item.meal || '')}"
+                oninput="updateMeal('${dayId}', '${type.key}', this.value)"
+              />
+            </div>
+            <div class="tags-container">
+              <span class="tag-label">Verantwortlich:</span>
+              ${['Dennis', 'Freundin', 'Beide'].map(p => `
+                <button 
+                  class="person-chip ${item.person === p ? 'active' : ''}" 
+                  data-person="${p}" 
+                  onclick="updatePerson('${dayId}', '${type.key}', '${p}')">
+                  ${p}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateMeal(dayId, typeKey, text) {
+      if (!planData[dayId]) planData[dayId] = {};
+      if (!planData[dayId][typeKey]) planData[dayId][typeKey] = { person: 'Beide' };
+      planData[dayId][typeKey].meal = text;
+      saveData();
+    }
+
+    function updatePerson(dayId, typeKey, person) {
+      if (!planData[dayId]) planData[dayId] = {};
+      if (!planData[dayId][typeKey]) planData[dayId][typeKey] = { meal: '' };
+      planData[dayId][typeKey].person = person;
+      saveData();
+      renderDayMeals(currentDayIndex);
+    }
+
+    function getRandomIdea(dayId, typeKey) {
+      const randomItem = RECIPE_IDEAS[Math.floor(Math.random() * RECIPE_IDEAS.length)];
+      updateMeal(dayId, typeKey, randomItem);
+      renderDayMeals(currentDayIndex);
+    }
+
+    function escapeHtml(string) {
+      return String(string).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Teilen per komprimiertem Base64-Hash in der URL
+    function getShareableUrl() {
+      const json = JSON.stringify(planData);
+      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(json))));
+      return window.location.origin + window.location.pathname + '#plan=' + encoded;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function sharePlan() {
+      const url = getShareableUrl();
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Link kopiert! Sende ihn deiner Freundin 📲');
+      }).catch(() => {
+        prompt('Hier ist dein Freigabelink zum Kopieren:', url);
+      });
+    }
+
+    function shareViaApp() {
+      const url = getShareableUrl();
+      if (navigator.share) {
+        navigator.share({
+          title: 'Unser Essensplan für die Woche',
+          text: 'Hier ist unser Essensplan für diese Woche! Schau mal rein:',
+          url: url
+        }).catch(() => {});
+      } else {
+        sharePlan();
+      }
+    }
+
+    function checkUrlHashData() {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#plan=')) {
+        try {
+          const rawB64 = decodeURIComponent(hash.replace('#plan=', ''));
+          const decodedJson = decodeURIComponent(escape(atob(rawB64)));
+          const imported = JSON.parse(decodedJson);
+          if (confirm('Neuer Wochenplan empfangen! Möchtest du ihn übernehmen?')) {
+            planData = imported;
+            saveData();
+            // URL wieder säubern
+            history.replaceState(null, null, window.location.pathname);
+            showToast('Wochenplan erfolgreich aktualisiert! 🎉');
+          }
+        } catch (e) {
+          console.error('Konnte Plandaten nicht parsen', e);
+        }
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
